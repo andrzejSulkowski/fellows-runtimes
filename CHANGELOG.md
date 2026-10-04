@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- People Polkadot: add the Individuality game pallets: `indiv-pallet-game` (index 55), `indiv-pallet-score` (index 56) and `indiv-pallet-airdrop` (index 70), which `indiv-pallet-game` needs as its airdrop backend. Score payouts are denominated in an asset set by Root through the new `external_asset::AssetLocation` dynamic parameter; it is unset by default, so payouts stay disabled until governance picks the asset. A new **transaction extension pipeline version 2** carries the `ScoreAsParticipant` and `GameAsInvited` origin modifiers.
-- Asset Hub Polkadot: add `indiv-pallet-scarcity` (index 155), NFTs held one per purse key on Coinage's model. Collection owners back all storage with a balance hold; purse-key burns, and up to 16 transfers per instance between paid moves, are feeless through the `AsScarcity` origin modifier, which a new **transaction extension pipeline version 2** carries. The runtime exposes `ScarcityApi` for batched metadata reads.
+- People Polkadot: add the Individuality game pallets: `indiv-pallet-game` (index 55), `indiv-pallet-score` (index 56) and `indiv-pallet-airdrop` (index 70), which `indiv-pallet-game` needs as its airdrop backend ([#1306](https://github.com/polkadot-fellows/runtimes/pull/1306)). Score payouts are denominated in an asset set by Root through the new `external_asset::AssetLocation` dynamic parameter; it is unset by default, so payouts stay disabled until governance picks the asset. A new **transaction extension pipeline version 2** carries the `ScoreAsParticipant` and `GameAsInvited` origin modifiers.
+- Asset Hub Polkadot: add `indiv-pallet-scarcity` (index 155), NFTs held one per purse key on Coinage's model ([#1306](https://github.com/polkadot-fellows/runtimes/pull/1306)). Collection owners back all storage with a balance hold; purse-key burns, and up to 16 transfers per instance between paid moves, are feeless through the `AsScarcity` origin modifier, which a new **transaction extension pipeline version 2** carries. The runtime exposes `ScarcityApi` for batched metadata reads.
 
 ### Removed
 
