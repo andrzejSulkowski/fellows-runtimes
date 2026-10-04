@@ -601,7 +601,7 @@ impl indiv_pallet_game::Config for Runtime {
 	type TicketSignature = MultiSignature;
 	type MaxGameSchedules = ConstU32<12>;
 	type MaxAttendanceHistoryDepth = ConstU32<12>;
-	type NftClaimCredits = ();
+	type NftClaimCredits = NftCredits;
 	type DefaultPhaseDurations = GamePhaseDurations;
 	type AccountSignature = Signature;
 	type PlayerStatementLimit = PlayerStatementLimit;
@@ -614,6 +614,111 @@ impl indiv_pallet_game::Config for Runtime {
 	type AirdropSource = GameAirdropSource;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = benchmark_utils::GamePalletBenchmarkHelper;
+}
+
+impl indiv_pallet_nft_credits::Config for Runtime {
+	type WeightInfo = weights::indiv_pallet_nft_credits::WeightInfo<Runtime>;
+	type XcmRouter = xcm_config::XcmRouter;
+	type NftClaimsParaId = polkadot_runtime_constants::system_parachain::AssetHubParaId;
+	// Matches the `NftClaims` index in Asset Hub Polkadot's `construct_runtime!`.
+	type NftClaimsPalletIndex = ConstU8<96>;
+	type ChannelInfo = ParachainSystem;
+	// One tree per block at most, and the offchain worker ships them every block, so the queue
+	// only fills while delivery to Asset Hub is down. Far fewer blocks than `AwardRetentionTtl`
+	// retains, so the oldest queued tree is one whose awards are still in state and a delivery that
+	// outlasts an outage needs no proof rebuilt from events. Eight full messages drain it. A
+	// `replay_credit_trees` during the outage breaks that: its tree is claimable on Asset Hub while
+	// the delivery is still queued here, so the last claim there asks for a deletion this entry
+	// then cannot deliver.
+	//
+	// An entry is 12 bytes, read at the value's `MaxEncodedLen`, so
+	// `authorize_send_credit_trees` pays about 3 KB of the `Normal` proof budget.
+	type MaxQueuedCreditTrees = ConstU32<256>;
+	// At most Asset Hub's `MaxTreesPerMessage`, otherwise the batches sent there fail to decode.
+	type MaxCreditTreesPerMessage = ConstU32<32>;
+	type ReplayCooldownSeconds = ConstU64<60>;
+	type NftClaimsRemoteWeight = NftClaimsRemoteWeight;
+	// Entries are the distinct blocks whose trees commit a claimant's credits, not a window of
+	// consecutive ones, so the bound counts games rather than time. One game awards a claimant at
+	// most `(MaxGroupSize - 1) * MaxRounds = 15` credits, one per co-player that reported `Person`
+	// on them, plus the attendance backfill, which awards the rest in a single call. Those land in
+	// 16 distinct blocks only if no two reports ever share one, and reports cluster. At one game a
+	// week `AwardRetentionTtl` spans about 13 games, so 208 entries cover the window even at that
+	// worst case; this leaves margin over it, and about 85 games at the few blocks a game usually
+	// takes. The list costs 1 KB at this bound.
+	//
+	// Being a count, the window shortens as games run more often. Governance sets the schedule and
+	// `new_game` only refuses a concurrent game, so back-to-back games would fill this in a day.
+	type MaxCreditBlocksPerClaimant = ConstU32<256>;
+	// The claims chain's own deadline, which is what the two have to agree on. What it costs this
+	// chain follows participation rather than a constant: a player earns at most
+	// `(MaxGroupSize - 1) * MaxRounds = 15` credits a game, so at one game a week 90 days is about
+	// 195 credits, or 13 KB at 65 bytes an award. Retaining personhood needs one game per
+	// `NonPlayingKickoutTime` and costs a fraction of that.
+	type AwardRetentionTtl = ClaimsChainTreeTtl;
+	type EnsureClaimsChainOrigin = EnsureClaimsChainSibling;
+	// At least Asset Hub's `MaxTreeDeletionsPerMessage`. A larger message fails to decode here,
+	// and the root TTL then removes the roots its deletions named.
+	type MaxTreeDeletionsPerMessage = ConstU32<64>;
+	type ClaimsChainTreeTtl = ClaimsChainTreeTtl;
+	// One block records at most one root, so a day holds 43200 at 2 seconds a block, which 64 per
+	// block clears in about 20 minutes. The root TTL is the longer of the two, so a sweep only
+	// removes roots the claims chain has given up on, with a month of slack for a backlog.
+	type MaxRootsPerSweep = ConstU32<64>;
+	// A tree block's awards are `CHUNKS_PER_TREE` keys, each charged at a full chunk, so one block
+	// costs about 290 KB of the proof budget and eight of them about half of it. The
+	// `integrity_test` is what holds this to the budget. A block records at most one tree block, so
+	// a call per block removes them eight times faster than they are made.
+	type MaxAwardBlocksPerSweep = ConstU32<8>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = benchmark_utils::NftCreditsBenchmarkHelper;
+}
+
+parameter_types! {
+	/// The claims chain's `TreeTtl`, duplicated here. The root TTL this chain sweeps by is
+	/// `ROOT_TTL_GRACE` past it, so a root outlives the tree built from it.
+	///
+	/// Keep it in step with `CreditTreeTtl` in Asset Hub Polkadot. A value below the real one keeps
+	/// roots for less time than the claims chain gives a claimant, which strands credits inside
+	/// their deadline. A value above it keeps roots after the last credit has expired.
+	pub const ClaimsChainTreeTtl: u64 = 90 * 24 * 60 * 60;
+
+	/// Upper bound on what one credit tree of a `receive_credit_trees` batch costs to execute on
+	/// the NFT claims chain. Charged to the caller of `replay_credit_trees`, so a repair pays for
+	/// the remote work it causes. What bounds replay traffic is `ReplayCooldownSeconds`; this
+	/// prices the work the replays that pass it cause.
+	///
+	/// Derived from the marginal per-tree cost of `receive_credit_trees` on Asset Hub: one
+	/// `CreditTrees` read and write, the per-tree execution term, and the `max_size` of a
+	/// `CreditTrees` entry in proof. Rounded up, and both dimensions carried, since a batch that
+	/// only paid `ref_time` would push a proof no one was charged for. Re-derive it whenever the
+	/// claims chain's `indiv_pallet_nft_claims` weights are regenerated; `integrity_test` holds
+	/// the whole `replay_credit_trees` charge, surcharge included, to the block's budget.
+	pub NftClaimsRemoteWeight: Weight = Weight::from_parts(150_000_000, 2_600);
+}
+
+/// Origin check for the parachain the credit trees are delivered to. Only that chain may name the
+/// roots this chain deletes.
+///
+/// Any origin that passes this check can strand a credit, so it accepts that one chain, not
+/// siblings in general.
+pub struct EnsureClaimsChainSibling;
+impl frame_support::traits::EnsureOrigin<RuntimeOrigin> for EnsureClaimsChainSibling {
+	type Success = ();
+
+	fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+		let claims_chain = <Runtime as indiv_pallet_nft_credits::Config>::NftClaimsParaId::get();
+		match o.clone().into() {
+			Ok(cumulus_pallet_xcm::Origin::SiblingParachain(id)) if id == claims_chain => Ok(()),
+			_ => Err(o),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+		let claims_chain = <Runtime as indiv_pallet_nft_credits::Config>::NftClaimsParaId::get();
+		Ok(cumulus_pallet_xcm::Origin::SiblingParachain(claims_chain).into())
+	}
 }
 
 pub struct GamePhaseDurations;
@@ -1435,6 +1540,45 @@ pub mod benchmark_utils {
 				)),
 				RuntimeCall::System(frame_system::Call::remark { remark: Vec::new() }),
 			)
+		}
+	}
+
+	/// What the credits benchmarks cannot set up themselves: only the runtime knows how its HRMP
+	/// channels are made.
+	pub struct NftCreditsBenchmarkHelper;
+	impl indiv_pallet_nft_credits::benchmarking::BenchmarkHelper for NftCreditsBenchmarkHelper {
+		fn set_unix_time(secs: u64) {
+			// `pallet_timestamp` holds the clock in milliseconds, and its `set` is an inherent, so
+			// this writes the value straight to storage.
+			pallet_timestamp::Now::<Runtime>::put(secs.saturating_mul(1_000));
+		}
+
+		fn open_nft_claims_channel(max_message_size: u32) {
+			use cumulus_pallet_parachain_system::RelevantMessagingState;
+			use cumulus_primitives_core::relay_chain::AbridgedHrmpChannel;
+
+			let channel = AbridgedHrmpChannel {
+				max_capacity: 1000,
+				max_total_size: 1_000_000,
+				max_message_size,
+				msg_count: 0,
+				total_size: 0,
+				mqc_head: None,
+			};
+			let claims_chain =
+				<Runtime as indiv_pallet_nft_credits::Config>::NftClaimsParaId::get();
+			let mut messaging_state = RelevantMessagingState::<Runtime>::get().unwrap_or(
+				cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot {
+					dmq_mqc_head: Default::default(),
+					relay_dispatch_queue_remaining_capacity: Default::default(),
+					ingress_channels: Vec::new(),
+					egress_channels: Vec::new(),
+				},
+			);
+			messaging_state.egress_channels.retain(|(id, _)| *id != claims_chain);
+			messaging_state.egress_channels.push((claims_chain, channel));
+			messaging_state.egress_channels.sort_by_key(|(id, _)| *id);
+			RelevantMessagingState::<Runtime>::put(messaging_state);
 		}
 	}
 
