@@ -910,7 +910,7 @@ construct_runtime!(
 		// 54: never used.
 		Game: indiv_pallet_game = 55,
 		Score: indiv_pallet_score = 56,
-		// 57: never used.
+		NftCredits: indiv_pallet_nft_credits = 57,
 		DummyDim: indiv_pallet_dummy_dim = 59,
 		PeopleLite: indiv_pallet_people_lite = 62,
 		Resources: indiv_pallet_resources = 63,
@@ -980,6 +980,7 @@ mod benches {
 		[indiv_pallet_game, Game]
 		[indiv_pallet_members, Members]
 		[indiv_pallet_members_notifier, MembersNotifier]
+		[indiv_pallet_nft_credits, NftCredits]
 		[indiv_pallet_origin_restriction, OriginRestriction]
 		[indiv_pallet_people, People]
 		[indiv_pallet_people_lite, PeopleLite]
@@ -1525,6 +1526,29 @@ impl_runtime_apis! {
 			xcm_runtime_apis::authorized_aliases::Error
 		> {
 			PolkadotXcm::is_authorized_alias(origin, target)
+		}
+	}
+
+	impl indiv_pallet_nft_credits::runtime_api::NftCreditsApi<Block, AccountId, BlockNumber> for Runtime {
+		fn nft_claim_credit_roots(
+			claimant: indiv_support::identity::AccountOrPerson<AccountId>,
+		) -> Vec<(BlockNumber, indiv_support::credit_trees::NftClaimCreditTree)> {
+			NftCredits::nft_claim_credit_roots(&claimant)
+		}
+
+		fn nft_claim_credit_proofs(
+			tree_block: BlockNumber,
+			claimant: indiv_support::identity::AccountOrPerson<AccountId>,
+		) -> Result<Vec<indiv_pallet_nft_credits::NftClaimCreditProof>, indiv_pallet_nft_credits::NftClaimCreditProofError> {
+			NftCredits::nft_claim_credit_proofs(tree_block, &claimant)
+		}
+
+		fn nft_claim_credit_proof_from_awards(
+			tree_block: BlockNumber,
+			awards: Vec<indiv_pallet_nft_credits::NftClaimCreditAward<AccountId>>,
+			leaf_index: u32,
+		) -> Result<indiv_pallet_nft_credits::NftClaimCreditProof, indiv_pallet_nft_credits::NftClaimCreditProofError> {
+			NftCredits::nft_claim_credit_proof_from_awards(tree_block, awards, leaf_index)
 		}
 	}
 

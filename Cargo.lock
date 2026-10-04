@@ -8157,6 +8157,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "indiv-pallet-nft-credits"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/individuality-community?rev=24033977b174dad1006f7f4b195acf45ce41daae#24033977b174dad1006f7f4b195acf45ce41daae"
+dependencies = [
+ "binary-merkle-tree",
+ "cumulus-primitives-core",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "indiv-pallet-game",
+ "indiv-pallet-score",
+ "indiv-support",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api 43.0.0",
+ "sp-io 48.0.0",
+ "sp-runtime 48.0.0",
+ "staging-xcm",
+]
+
+[[package]]
 name = "indiv-pallet-origin-restriction"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/individuality-community?rev=24033977b174dad1006f7f4b195acf45ce41daae#24033977b174dad1006f7f4b195acf45ce41daae"
@@ -13548,6 +13570,7 @@ dependencies = [
  "indiv-pallet-members",
  "indiv-pallet-members-notifier",
  "indiv-pallet-network-suffix",
+ "indiv-pallet-nft-credits",
  "indiv-pallet-origin-restriction",
  "indiv-pallet-people",
  "indiv-pallet-people-airdrops",

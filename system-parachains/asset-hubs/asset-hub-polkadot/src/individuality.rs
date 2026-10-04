@@ -539,8 +539,8 @@ parameter_types! {
 	/// games at once, and keeps Asset Hub from holding a tree per non-empty block for the chain's
 	/// lifetime.
 	///
-	/// `indiv-pallet-nft-credits` on People Polkadot has to derive the TTL of its own roots from
-	/// this constant, so a root outlives the tree built from it.
+	/// People Polkadot keeps a copy of this constant as `ClaimsChainTreeTtl` and derives the TTL
+	/// for its own roots from it, so a root outlives the tree built from it.
 	pub const CreditTreeTtl: u64 = 90 * 24 * 60 * 60;
 }
 
@@ -578,8 +578,7 @@ impl indiv_pallet_nft_claims::Config for Runtime {
 	type XcmRouter = xcm_config::XcmRouter;
 	// The chain `EnsureGameChainOrigin` authenticates, and where the roots come from.
 	type GameChainLocation = system_parachains_constants::polkadot::locations::PeopleLocation;
-	// The index of `NftCredits` in upstream's `next-people-paseo` runtime, which People Polkadot
-	// keeps free for it.
+	// Matches the `NftCredits` index in People Polkadot's `construct_runtime!`.
 	type GameChainPalletIndex = ConstU8<57>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = benchmark_utils::NftClaimsBenchmarkHelper;
