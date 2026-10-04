@@ -1790,6 +1790,7 @@ dependencies = [
  "indiv-pallet-dotns-gateway",
  "indiv-pallet-members-subscriber",
  "indiv-pallet-network-suffix",
+ "indiv-pallet-nft-claims",
  "indiv-pallet-origin-restriction",
  "indiv-pallet-pgas",
  "indiv-pallet-scarcity",
@@ -8133,6 +8134,26 @@ dependencies = [
  "indiv-support",
  "parity-scale-codec",
  "scale-info",
+]
+
+[[package]]
+name = "indiv-pallet-nft-claims"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/individuality-community?rev=24033977b174dad1006f7f4b195acf45ce41daae#24033977b174dad1006f7f4b195acf45ce41daae"
+dependencies = [
+ "binary-merkle-tree",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "indiv-pallet-scarcity",
+ "indiv-support",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api 43.0.0",
+ "sp-core 43.0.0",
+ "sp-runtime 48.0.0",
+ "staging-xcm",
 ]
 
 [[package]]

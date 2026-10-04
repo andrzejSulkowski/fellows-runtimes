@@ -1806,6 +1806,7 @@ construct_runtime!(
 		VestingPrecompiles: pallet_vesting_precompiles::pallet = 93,
 
 		// Individuality pallets
+		NftClaims: indiv_pallet_nft_claims = 96,
 		MembersSubscriber: indiv_pallet_members_subscriber = 97,
 		AliasAccounts: indiv_pallet_alias_accounts = 98,
 		Pgas: indiv_pallet_pgas = 99,
@@ -2148,6 +2149,7 @@ mod benches {
 		[indiv_pallet_alias_accounts, AliasAccounts]
 		[indiv_pallet_dotns_gateway, DotnsGateway]
 		[indiv_pallet_members_subscriber, MembersSubscriber]
+		[indiv_pallet_nft_claims, NftClaims]
 		[indiv_pallet_origin_restriction, OriginRestriction]
 		[indiv_pallet_pgas, Pgas]
 		[indiv_pallet_scarcity, Scarcity]
@@ -2918,6 +2920,14 @@ pallet_revive::impl_runtime_apis_plus_revive_traits!(
 			queries: indiv_pallet_scarcity::runtime_api::MetadataQueries,
 		) -> Vec<indiv_pallet_scarcity::runtime_api::MetadataLayers> {
 			Scarcity::metadata_batch(queries)
+		}
+	}
+
+	impl indiv_pallet_nft_claims::runtime_api::NftClaimsApi<Block> for Runtime {
+		fn preview_mints(
+			queries: indiv_pallet_nft_claims::runtime_api::PreviewQueries,
+		) -> Vec<indiv_pallet_nft_claims::runtime_api::PreviewOutcome> {
+			NftClaims::preview_mints(queries)
 		}
 	}
 

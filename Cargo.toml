@@ -101,6 +101,7 @@ indiv-pallet-members = { git = "https://github.com/paritytech/individuality-comm
 indiv-pallet-members-notifier = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
 indiv-pallet-members-subscriber = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
 indiv-pallet-network-suffix = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
+indiv-pallet-nft-claims = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
 indiv-pallet-origin-restriction = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
 indiv-pallet-people = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
 indiv-pallet-people-lite = { git = "https://github.com/paritytech/individuality-community", rev = "24033977b174dad1006f7f4b195acf45ce41daae", default-features = false, version = "*" }
