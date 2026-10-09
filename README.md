@@ -81,6 +81,7 @@ To submit a fix to release `x.y.z` and make a point release:
 - Check for other planned releases which originally targeted the same semver version and post on the issue letting them know that they should bump
 - Once the release is out, amend the GitHub release and delete all unchanged runtime blobs. Highlight if this release only affects some runtimes (contact a maintainer)
 - Backport your changes to the `CHANGELOG.md` to the main branch
+
 ## Release guidelines
 
 Here is an overview of the recommended steps.
@@ -103,7 +104,7 @@ For detailed instructions on submitting runtime upgrades via OpenGov, see the [R
 
 ## Communication channels
 
-The Fellowship is using Matrix for communication. Right now there exists two channels:
+The Fellowship is using Matrix for communication. There are currently two channels:
 
 - [Polkadot Technical Fellowship Channel](https://matrix.to/#/#fellowship-members:parity.io): The channel for all Fellowship members to discuss. To get voice rights, you need to be part of the Fellowship. However, the channel is readable by anyone.
 - [Polkadot Technical Fellowship - Open Channel](https://matrix.to/#/#fellowship-open-channel:parity.io): Open channel for anyone. Should be used to reach out to the Fellowship e.g. to request review or help on a topic.
